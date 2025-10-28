@@ -452,10 +452,27 @@
             display: block;
         }
 
+        /* Mobile Overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 998;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-280px);
+                z-index: 999;
             }
 
             .sidebar.mobile-open {
@@ -473,6 +490,44 @@
             .input-container {
                 margin: 40px auto;
                 padding: 25px;
+            }
+
+            .metrics-container {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 0 15px;
+            }
+
+            .logo {
+                font-size: 20px;
+            }
+
+            .currency-selector label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .input-container {
+                padding: 20px;
+            }
+
+            .input-container h2 {
+                font-size: 22px;
+            }
+
+            .transaction-item {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .settlement-row {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
             }
         }
     </style>
@@ -495,6 +550,9 @@
             </select>
         </div>
     </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -669,12 +727,43 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const overlay = document.getElementById('sidebarOverlay');
+
             // Hamburger menu toggle
             document.getElementById('hamburger').addEventListener('click', function() {
-                const sidebar = document.getElementById('sidebar');
-                const mainContent = document.getElementById('mainContent');
-                sidebar.classList.toggle('collapsed');
-                mainContent.classList.toggle('expanded');
+                // Check if mobile view
+                const isMobile = window.innerWidth <= 768;
+
+                if (isMobile) {
+                    sidebar.classList.toggle('mobile-open');
+                    overlay.classList.toggle('active');
+                } else {
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('expanded');
+                }
+            });
+
+            // Close sidebar when clicking overlay (mobile)
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                const isMobile = window.innerWidth <= 768;
+                
+                if (!isMobile) {
+                    // Desktop: remove mobile classes
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                } else {
+                    // Mobile: ensure sidebar is hidden and main content is full width
+                    sidebar.classList.remove('collapsed');
+                    mainContent.classList.remove('expanded');
+                }
             });
 
             // Navigation links
@@ -685,6 +774,12 @@
                     
                     currentMode = this.dataset.mode;
                     switchMode(currentMode);
+
+                    // Close sidebar on mobile after selection
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('mobile-open');
+                        overlay.classList.remove('active');
+                    }
                 });
             });
         });
